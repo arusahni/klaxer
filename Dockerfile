@@ -1,13 +1,14 @@
 FROM python:3.6
 MAINTAINER Kevin Dwyer
 
-# Add Klaxer requirements to container
-ADD requirements.txt /etc/klaxer/
-
-# Install dependencies
-RUN pip install -r /etc/klaxer/requirements.txt
+COPY . /tmp/klaxer
+RUN pip install -e "/tmp/klaxer/[dev]"
 
 ENV PYTHONPATH=/klaxer
+ENV FLASK_APP=klaxer.api
+ENV FLASK_DEBUG=1
+
+EXPOSE 8000
 
 ENTRYPOINT ["bash"]
-#CMD ["-c", "python"]
+CMD ["-c", "flask run -p 8000"]
