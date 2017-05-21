@@ -11,6 +11,10 @@ User = namedtuple('User', ['id', 'name', 'handle'])
 Message = namedtuple('Message', ['ts', 'user', 'username', 'text', 'type', 'bot_id', 'bot_link', 'subtype'])
 Message.__new__.__defaults__ = (None,) * len(Message._fields)
 
+# Regex pattern for text ending with dup indicators (e.g. "(x2)")
+debounce_pattern = '\(x(?P<count>\d+)\)$'
+debounce_regex = re.compile(debounce_pattern)
+
 
 class Destination:
     """Base for defining Slack destinations to send `Message`s to."""
@@ -107,15 +111,11 @@ class Slack(Destination):
 
 
 def debounce(text):
-    # Regex pattern for text ending with dup indicators (e.g. "(x2)")
-    pattern = '\(x\d+\)$'
-    reg = re.compile(pattern)
-
     # Check for signs of a dup indicator
-    is_dup = reg.search(text)
+    is_dup = debounce_regex.search(text)
 
     if is_dup:
-        old_amount = is_dup.group(0).split('(x')[1].split(')')[0]
+        old_amount = is_dup.group('count')
         new_amount = str(int(old_amount) + 1)
     else:
         return f'{text} (x2)'
