@@ -1,3 +1,4 @@
+import re
 import urllib.request
 from collections import namedtuple
 
@@ -106,9 +107,18 @@ class Slack(Destination):
 
 
 def debounce(text):
-    if '(x' in text:
-        old_amount = text.split('(x')[1].split(')')[0]
+    # Regex pattern for text ending with dup indicators (e.g. "(x2)")
+    pattern = '\(x\d+\)$'
+    reg = re.compile(pattern)
+
+    # Check for signs of a dup indicator
+    is_dup = reg.search(text)
+
+    if is_dup:
+        old_amount = is_dup.group(0).split('(x')[1].split(')')[0]
         new_amount = str(int(old_amount) + 1)
     else:
         return f'{text} (x2)'
+
     return text.replace(old_amount, new_amount)
+
