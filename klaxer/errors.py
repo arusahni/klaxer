@@ -1,10 +1,10 @@
 """Errorz"""
 
 class AuthorizationError(BaseException):
-    pass
+    message = "Could not authorize user"
 
 class NoRouteFoundError(BaseException):
-    pass
+    message = "No alert route found"
 
 class ChannelNotFoundError(BaseException):
-    pass
+    message = "Could not authorize user"

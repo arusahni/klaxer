@@ -5,10 +5,8 @@ COPY . /tmp/klaxer
 RUN pip install -e "/tmp/klaxer/[dev]"
 
 ENV PYTHONPATH=/klaxer
-ENV FLASK_APP=klaxer.api
-ENV FLASK_DEBUG=1
 
 EXPOSE 8000
 
 ENTRYPOINT ["bash"]
-CMD ["-c", "flask run -p 8000"]
+CMD ["-c", "hug -f /klaxer/klaxer.py"]

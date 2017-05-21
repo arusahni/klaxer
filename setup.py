@@ -7,7 +7,7 @@ from codecs import open as codecs_open
 from setuptools import setup, find_packages
 
 REQUIREMENTS = [
-    'flask',
+    'hug',
     'requests',
     'zappa',
     'slacker'

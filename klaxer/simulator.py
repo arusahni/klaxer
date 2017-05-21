@@ -6,6 +6,7 @@ Usage: python -m klaxer.simulator
 import argparse
 import json
 import random
+import sys
 
 import requests
 
@@ -23,13 +24,14 @@ MESSAGE_TEMPLATE = {
 }
 
 def send_alert(host, severity):
-    print(f'Sending {severity}')
+    sys.stdout.write(f'Sending {severity}... ')
     MESSAGE_TEMPLATE['attachments'][0] = {
         'title': f'{SYSTEM} - {severity}',
         'text': f'{SERVICE_NAME}/disk-usage: CheckDisk {severity.upper()}: / 85.12% bytes usage (6 GiB/7 GiB)\n : {SYSTEM} : sensu-clients,testing,client:{SERVICE_NAME}',
         'color': f'{"red" if severity == "error" else "yellow"}',
     }
-    requests.post(f'http://{host}/alert/sensu/12345', json=MESSAGE_TEMPLATE)
+    response = requests.post(f'http://{host}/alert/sensu/12345', json=MESSAGE_TEMPLATE)
+    sys.stdout.write(f'{response.text}\n')
 
 def main():
     args = parse_args()
