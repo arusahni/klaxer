@@ -17,7 +17,8 @@ ENRICHMENTS = [
 ]
 
 ROUTES = [
-    ('#dmesg', lambda x: x.service == 'root'),
+    ('dmesg', lambda x: x.service == 'root'),
+    ('apitests', lambda x: x.service == 'sensu'),
 ]
 
 SLACK_TOKEN = os.environ.get('KLAXER_TOKEN')

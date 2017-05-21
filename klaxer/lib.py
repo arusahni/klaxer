@@ -11,7 +11,7 @@ def validate(service_name, token):
     #TODO: Implement. Raise AuthorizationError if invalid, otherwise just pass through
     pass
 
-    
+
 def classify(alert, rules):
     """Determine the severity of an alert
 
@@ -49,9 +49,5 @@ def route(alert, routes):
     raise NoRouteFoundError()
 
 def send(alert):
-    slack = Slack()
-    last = slack.get_last_message(alert.target)
-    if alert == last.message:
-        slack.delete_message(last)
-    alert.count += 1 # TODO: actually extract the count from `last`
-    slack.send_alert(alert)
+    slack = Slack(alert.target)
+    slack.post_message(alert.message)

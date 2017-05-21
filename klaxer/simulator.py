@@ -16,7 +16,7 @@ SYSTEM = 'service.example.com'
 SERVICE_NAME = 'Service'
 
 MESSAGE_TEMPLATE = {
-    'channel': '#dmesg',
+    'channel': '#apitests',
     'username': 'sensu',
     'icon_emoji': 'skull',
     'attachments': [{
@@ -42,8 +42,8 @@ def main():
 def parse_args():
     parser = argparse.ArgumentParser(description='Send some requests')
     parser.add_argument('-n', default=1, type=int, help='Number of messages to send')
-    parser.add_argument('-s', dest='severity', default='both', choices=['both'], help='Number of messages to send')
-    parser.add_argument('--host', default='localhost:8000', choices=['both'], help='Number of messages to send')
+    parser.add_argument('-s', dest='severity', default='both', choices=['both'] + SEVERITIES, help='Number of messages to send')
+    parser.add_argument('--host', default='localhost:8000', help='Number of messages to send')
     return parser.parse_args()
 
 if __name__ == "__main__":
