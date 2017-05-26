@@ -1,0 +1,15 @@
+sensu:
+    description: "Sensu alerts"
+    classification:
+        CRITICAL: ["error", "failure"]
+        WARNING: ["warning"]
+    exclude: ["keepalive"]
+    enrichments:
+        - IF: "CheckDisk"
+          THEN: "@dylan {} (enrichment added, have a :beer:)"
+        - IF: "foo"
+          THEN: "test: {}"
+    routes:
+        - IF: "bytes"
+          THEN: "apitests"
+

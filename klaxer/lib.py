@@ -11,39 +11,54 @@ def validate(service_name, token):
     #TODO: Implement. Raise AuthorizationError if invalid, otherwise just pass through
     pass
 
-
 def classify(alert, rules):
     """Determine the severity of an alert
 
     :param alert: The alert to test
     :param rules: An array of classification rules to test against
+    :returns: Alert - The Alert object with severity added
     """
     for rule in rules:
-        severity = rule(alert)
-        if severity:
-            alert.severity = severity
-            break
-    else:
-        alert.severity = Severity.UNKNOWN
+        alert.severity = rule(alert)
+        break
+
     return alert
 
 def filtered(alert, rules):
-    """Determine if an alert meets a rule in a ruleset"""
+    """Determine if an alert meets an exclusion rule
+
+    :param alert: The alert to test
+    :param rules: An array of exclusion rules to test against
+    :returns: Boolean - True if the alert should be dropped
+    """
     return any(rule(alert) for rule in rules)
 
-def enrich(alert, enrichments):
-    """Enrich an alert"""
-    for enrichment in enrichments:
+def enrich(alert, rules):
+    """Determine if an alert meets an enrichment rule
+
+    :param alert: The alert to test
+    :param rules: An array of enrichment rules to test against
+    :returns: Alert - The enriched Alert object
+    """
+    for enrichment in rules:
         updates = enrichment(alert)
         if not updates:
             continue
-        for name, value in enrichment(alert).items():
+        for name, value in updates.items():
             alert[name] = value
+
     return alert
 
-def route(alert, routes):
-    for target, test in routes:
-        if test(alert):
+def route(alert, rules):
+    """Determine if an alert meets a routing rule
+
+    :param alert: The alert to test
+    :param rules: An array of routing rules to test against
+    :returns: Alert - The routed Alert object
+    """
+    for route in rules:
+        target = route(alert)
+        if target:
             alert.target = target
             return alert
     raise NoRouteFoundError()
