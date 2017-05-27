@@ -37,7 +37,7 @@ def incoming(service_name: hug.types.text, token: hug.types.text, response, debu
         # Present relevant debug info without actually sending the Alert
         if debug:
             return {
-                'status': 'ok',
+                'status': 'not sent',
                 'count': alert.count,
                 'service': alert.service,
                 'message': alert.message,

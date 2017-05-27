@@ -1,7 +1,6 @@
 import yaml
-
 from klaxer.models import Severity
-from klaxer.errors import ServiceNotDefinedError
+from klaxer.errors import ServiceNotDefinedError, KlaxerConfigError
 
 
 class Rules:
@@ -12,15 +11,17 @@ class Rules:
         self._routing_rules = {}
         self._config = None
 
-        # TODO: Absolute path? Where should this live?
-        with open('config/klaxer.yml', 'r') as ymlfile:
-            self._config = yaml.load(ymlfile)
+        try:
+            # TODO: Absolute path? Where should this live?
+            with open('config/klaxer.yml', 'r') as ymlfile:
+                self._config = yaml.load(ymlfile)
+        except yaml.parser.ParserError as pe:
+            raise KlaxerConfigError(f'failed to parse config - {str(pe)}')
 
         for section in self._config:
-            # TODO: Check if rules have already been defined for this section's
-            # service.
+            # Subsequent definitions of the same service will overwrite the
+            # previous ones.
             self._build_rules(section)
-
 
     def _build_rules(self, service):
         """Build the rules sets for classification, exclusion, enrichment and
@@ -42,12 +43,19 @@ class Rules:
         """
         service = service.lower()
         cfg = self._config[service]
+
+        # This is a required setting
+        if 'classification' not in cfg:
+            raise KlaxerConfigError(f'classification rules not defined for {service}')
+
         self._classification_rules[service] = []
         self._classification_rules[service].append(
             lambda x, cfg=cfg: Severity.CRITICAL if any(crit in x.message.lower() for crit in
-                                            cfg['classification']['CRITICAL'])
+                                            cfg['classification'].get('CRITICAL', []))
                     else Severity.WARNING if any(warn in x.message.lower() for warn in
-                                            cfg['classification']['WARNING'])
+                                            cfg['classification'].get('WARNING', []))
+                    else Severity.OK if any(ok in x.message.lower() for ok in
+                                            cfg['classification'].get('OK', []))
                     else Severity.UNKNOWN
         )
 
@@ -60,6 +68,11 @@ class Rules:
         service = service.lower()
         cfg = self._config[service]
         self._exclusion_rules[service] = []
+
+        # This is an optional setting
+        if 'exclude' not in cfg:
+            return
+
         self._exclusion_rules[service].append(
             lambda x, cfg=cfg: any(ignore in x.message.lower() for ignore in cfg['exclude'])
         )
@@ -74,6 +87,10 @@ class Rules:
         cfg = self._config[service]
         self._enrichment_rules[service] = []
 
+        # This is an optional setting
+        if 'enrichments' not in cfg:
+            return
+
         if isinstance(cfg['enrichments'], str):
             self._enrichment_rules[service].append(
                 lambda x, cfg=cfg: {'message': cfg['enrichments'].format(x.message)}
@@ -84,8 +101,7 @@ class Rules:
                     lambda x, e=e: {'message': e['THEN'].format(x.message)} if e['IF'].lower() in x.message.lower() else None
                 )
         else:
-            #TODO: Error here
-            pass
+            raise KlaxerConfigError(f'Invalid enrichments definition for {service}')
 
     def _build_routing_rules(self, service):
         """Build the routing rule set for a service
@@ -95,6 +111,11 @@ class Rules:
         """
         service = service.lower()
         cfg = self._config[service]
+
+        # This is a required setting
+        if 'routes' not in cfg:
+            raise KlaxerConfigError(f'routes not defined for {service}')
+
         self._routing_rules[service] = []
 
         if isinstance(cfg['routes'], str):
@@ -107,8 +128,7 @@ class Rules:
                     lambda x, r=r: r['THEN'] if r['IF'].lower() in x.message.lower() else None
                 )
         else:
-            #TODO: Error here
-            pass
+            raise KlaxerConfigError(f'invalid routes definition for {service}')
 
     def get_classification_rules(self, service):
         """Get the classification rule set for a service. This rule set will be
@@ -165,13 +185,4 @@ class Rules:
             return self._routing_rules[service]
         except KeyError as ke:
             raise ServiceNotDefinedError(str(ke))
-
-
-if __name__ == '__main__':
-    r = Rules()
-    rules = r.get_routing_rules('Service')
-    print(rules)
-    test = "this is a keepalive bytes test"
-    for rule in rules:
-        print(rule(test))
 
