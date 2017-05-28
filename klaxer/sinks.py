@@ -10,12 +10,10 @@ from datetime import datetime
 from slacker import Slacker
 
 from klaxer import config, errors
-from klaxer.models import Severity
+from klaxer.models import Severity, Message
 
 Channel = namedtuple('Channel', ['id', 'name'])
 User = namedtuple('User', ['id', 'name', 'handle'])
-Message = namedtuple('Message', ['attachments', 'icons', 'ts', 'user', 'username', 'text', 'type', 'bot_id', 'bot_link', 'subtype'])
-Message.__new__.__defaults__ = (None,) * len(Message._fields)
 
 # Regex pattern for text ending with dup indicators (e.g. "(x2)")
 debounce_pattern = r'\(x(?P<count>\d+)\)$'

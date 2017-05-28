@@ -43,6 +43,27 @@ class Alert:
         return cls(service_name, **TRANSFORMERS[service_name](data))
 
 
+class NaiveContainer:
+    """Holds any values you give to it and retrieves them safely."""
+    def __init__(self, *args, **kwargs):
+        if len(args) > 0:
+            raise TypeError('NaiveContainer does not accept positional arguments')
+        for kwarg in kwargs:
+            setattr(self, kwarg, kwargs[kwarg])
+
+    def __getattr__(self, name):
+        return
+
+
+class Message(NaiveContainer):
+    """Naively holds attributes from a Slack message due to dynamic rendering."""
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def __repr__(self):
+        return '<%s.%s>' % (self.__class__.__name__, self.id)
+
+
 @transformer('sensu')
 def transform_sensu(data):
     """Decompose a sensu alert into arguments for an alert"""
