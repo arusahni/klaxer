@@ -37,6 +37,20 @@ class Alert:
         # Ignore timestamp since this is used to snooze
         return hash((self.severity, self.service, self.title, self.message))
 
+    def to_dict(self):
+        return {
+            'count': self.count,
+            'service': self.service,
+            'message': self.message,
+            'severity': str(self.severity),
+            'target': self.target,
+            'timestamp': self.timestamp,
+            'title': self.title,
+            'username': self.username,
+            'icon_emoji': self.icon_emoji,
+            'icon_url': self.icon_url
+        }
+
     @classmethod
     def from_service(cls, service_name, data):
         """Get an instance of the class with normalized service data"""

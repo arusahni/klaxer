@@ -35,14 +35,7 @@ def incoming(service_name: hug.types.text, token: hug.types.text, response, debu
 
         # Present relevant debug info without actually sending the Alert
         if debug:
-            return {
-                'status': 'not sent',
-                'count': alert.count,
-                'service': alert.service,
-                'message': alert.message,
-                'severity': str(alert.severity),
-                'target': alert.target
-            }
+            return alert.to_dict()
 
         #The target channel gets queried for the most recent message. If it's identical, perform rollup. Otherwise, post the alert.
         send(alert)
