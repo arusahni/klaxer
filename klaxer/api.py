@@ -5,7 +5,6 @@ import logging
 import hug
 from falcon import HTTP_500
 
-from klaxer.config import CLASSIFICATION_RULES, ENRICHMENTS, EXCLUSION_RULES, ROUTES
 from klaxer.rules import Rules
 from klaxer.errors import AuthorizationError, NoRouteFoundError, ServiceNotDefinedError
 from klaxer.lib import classify, enrich, filtered, route, send, validate
