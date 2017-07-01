@@ -1,14 +1,16 @@
 """The main Klaxer server"""
 
 import logging
+import json
 
 import hug
-from falcon import HTTP_500
+from falcon import HTTP_400, HTTP_500
 
-from klaxer.config import CLASSIFICATION_RULES, ENRICHMENTS, EXCLUSION_RULES, ROUTES
+from klaxer import config
 from klaxer.errors import AuthorizationError, NoRouteFoundError
 from klaxer.lib import classify, enrich, filtered, route, send, validate
 from klaxer.models import Alert
+from klaxer.users import create_user, add_message, bootstrap, api_key_authentication, is_existing_user
 
 
 CURRENT_FILTERS = []
@@ -19,17 +21,17 @@ def incoming(service_name: hug.types.text, token: hug.types.text, response, body
     try:
         validate(service_name, token)
         alert = Alert.from_service(service_name, body)
-        alert = classify(alert, CLASSIFICATION_RULES)
+        alert = classify(alert, config.CLASSIFICATION_RULES)
         # Filter based on rules (e.g. junk an alert if a string is in the body or if it came from a CI bot).
-        if filtered(alert, EXCLUSION_RULES):
+        if filtered(alert, config.EXCLUSION_RULES):
             return
         #Filtered based on user interactions (e.g. bail if we've snoozed the notification type snoozed).
-        if filtered(alert, CURRENT_FILTERS):
+        if filtered(alert, config.CURRENT_FILTERS):
             return
         #Enriched based on custom rules (e.g. all alerts with 'keepalive' have '@deborah' appended to them so Deborah gets an extra level of notification priority.
-        alert = enrich(alert, ENRICHMENTS)
+        alert = enrich(alert, config.ENRICHMENTS)
         # Determine where the message goes
-        alert = route(alert, ROUTES)
+        alert = route(alert, config.ROUTES)
         #The target channel gets queried for the most recent message. If it's identical, perform rollup. Otherwise, post the alert.
         send(alert)
         return {"status": "ok"}
@@ -37,3 +39,36 @@ def incoming(service_name: hug.types.text, token: hug.types.text, response, body
         logging.exception('Failed to serve an alert response')
         response.status = HTTP_500
         return {"status": error.message}
+
+
+@hug.post('/user/register')
+def register(response, body=None):
+    """Register for Klaxer and get a key in return."""
+    if not body:
+        response.status = HTTP_400
+        return {"status": "No request body provided"}
+    email = body.get('email')
+    name = body.get('name')
+    if not email or not name:
+        response.status = HTTP_400
+        return {"status": "Please provide a valid name and email."}
+    if is_existing_user(email):
+        response.status = HTTP_400
+        return {"status": f"Email {email} is already registered"}
+    user = create_user(name=name, email=email)
+    return {
+        'id': user.id,
+        'api_key': user.api_key
+    }
+
+
+@hug.get('/user/me', requires=api_key_authentication)
+def profile(user: hug.directives.user, response, body=None):
+    """If authenticated, give the user back their profile information."""
+    return user.to_dict()
+
+
+@hug.startup()
+def startup(api):
+    """Bootstrap the database when the API starts."""
+    bootstrap()

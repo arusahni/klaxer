@@ -25,3 +25,10 @@ SLACK_TOKEN = os.environ.get('KLAXER_TOKEN')
 
 # Every 5 minutes
 WINDOW = 60 * 5
+
+# Database
+DB_CONNECTION_STRING = 'sqlite:///klaxer.db'
+
+# Messages
+MSG_WELCOME = 'Welcome to Klaxer! Let staff know if you have any issues.'
+MSG_UNVERIFIED = 'Your account is currently unverified and may be limited until final approval.'
