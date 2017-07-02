@@ -97,7 +97,7 @@ class NoValueEnum(Enum):
         return '<%s.%s>' % (self.__class__.__name__, self.name)
 
 class Severity(NoValueEnum):
-    WARNING = 'warning'
-    CRITICAL = 'critical'
-    OK = 'ok'
-    UNKNOWN = 'unknown'
+    CRITICAL = 3
+    WARNING = 2
+    OK = 1
+    UNKNOWN = 0

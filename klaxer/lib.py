@@ -18,9 +18,13 @@ def classify(alert, rules):
     :param rules: An array of classification rules to test against
     :returns: Alert - The Alert object with severity added
     """
+    sev = []
     for rule in rules:
-        alert.severity = rule(alert)
-        break
+        sev.append(rule(alert))
+
+    # Pick the highest priority classification from the classifications
+    sev.sort(key=lambda x: x.value)
+    alert.severity = sev.pop()
 
     return alert
 

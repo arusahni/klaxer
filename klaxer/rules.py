@@ -30,93 +30,112 @@ class Rules:
         :param service: The service for which rule sets will be generated
         :returns: None
         """
-        self._build_classification_rules(service)
-        self._build_exclusion_rules(service)
-        self._build_enrichment_rules(service)
-        self._build_routing_rules(service)
+        if 'message' not in self._config[service]:
+            self._config[service]['message'] = {}
 
-    def _build_classification_rules(self, service):
+        if 'title' not in self._config[service]:
+            self._config[service]['title'] = {}
+
+        self._classification_rules[service] = []
+        self._exclusion_rules[service] = []
+        self._enrichment_rules[service] = []
+        self._routing_rules[service] = []
+
+        self._build_classification_rules(service, 'message')
+        self._build_classification_rules(service, 'title')
+
+        self._build_exclusion_rules(service, 'message')
+        self._build_exclusion_rules(service, 'title')
+
+        self._build_enrichment_rules(service, 'message')
+        self._build_enrichment_rules(service, 'title')
+
+        self._build_routing_rules(service, 'message')
+        self._build_routing_rules(service, 'title')
+
+        # Ensure that required rule sets are defined
+        if not self._classification_rules:
+            raise ConfigurationError(f'classification rules not defined for {service}')
+
+        if not self._routing_rules:
+            raise ConfigurationError(f'routes not defined for {service}')
+
+    def _build_classification_rules(self, service, source):
         """Build the classification rule set for a service
 
         :param service: The service for which rule sets will be generated
+        :param source: The source field from the Alert object that will be used
         :returns: None
         """
         service = service.lower()
-        cfg = self._config[service]
+        cfg = self._config[service][source]
 
-        # This is a required setting
+        # Default to returning UNKNOWN severity
         if 'classification' not in cfg:
-            raise ConfigurationError(f'classification rules not defined for {service}')
+            self._classification_rules[service].append(lambda x: Severity.UNKNOWN)
+            return
 
-        self._classification_rules[service] = []
         self._classification_rules[service].append(
-            lambda x, cfg=cfg: Severity.CRITICAL if any(crit in x.message.lower() for crit in
+            lambda x, cfg=cfg: Severity.CRITICAL if any(crit in getattr(x, source).lower() for crit in
                                             cfg['classification'].get('CRITICAL', []))
-                    else Severity.WARNING if any(warn in x.message.lower() for warn in
+                    else Severity.WARNING if any(warn in getattr(x, source).lower() for warn in
                                             cfg['classification'].get('WARNING', []))
-                    else Severity.OK if any(ok in x.message.lower() for ok in
+                    else Severity.OK if any(ok in getattr(x, source).lower() for ok in
                                             cfg['classification'].get('OK', []))
                     else Severity.UNKNOWN
         )
 
-    def _build_exclusion_rules(self, service):
+    def _build_exclusion_rules(self, service, source):
         """Build the exclusion rule set for a service
 
         :param service: The service for which rule sets will be generated
         :returns: None
         """
         service = service.lower()
-        cfg = self._config[service]
-        self._exclusion_rules[service] = []
+        cfg = self._config[service][source]
 
-        # This is an optional setting
         if 'exclude' not in cfg:
             return
 
         self._exclusion_rules[service].append(
-            lambda x, cfg=cfg: any(ignore in x.message.lower() for ignore in cfg['exclude'])
+            lambda x, cfg=cfg: any(ignore in getattr(x, source).lower() for ignore in cfg['exclude'])
         )
 
-    def _build_enrichment_rules(self, service):
+    def _build_enrichment_rules(self, service, source):
         """Build the enrichment rule set for a service
 
         :param service: The service for which rule sets will be generated
         :returns: None
         """
         service = service.lower()
-        cfg = self._config[service]
-        self._enrichment_rules[service] = []
+        cfg = self._config[service][source]
 
-        # This is an optional setting
         if 'enrichments' not in cfg:
             return
 
         if isinstance(cfg['enrichments'], str):
             self._enrichment_rules[service].append(
-                lambda x, cfg=cfg: {'message': cfg['enrichments'].format(x.message)}
+                lambda x, cfg=cfg: {source: cfg['enrichments'].format(getattr(x, source))}
             )
         elif isinstance(cfg['enrichments'], list):
             for e in cfg['enrichments']:
                 self._enrichment_rules[service].append(
-                    lambda x, e=e: {'message': e['THEN'].format(x.message)} if e['IF'].lower() in x.message.lower() else None
+                    lambda x, e=e: {source: e['THEN'].format(getattr(x, source))} if e['IF'].lower() in getattr(x, source).lower() else None
                 )
         else:
             raise ConfigurationError(f'Invalid enrichments definition for {service}')
 
-    def _build_routing_rules(self, service):
+    def _build_routing_rules(self, service, source):
         """Build the routing rule set for a service
 
         :param service: The service for which rule sets will be generated
         :returns: None
         """
         service = service.lower()
-        cfg = self._config[service]
+        cfg = self._config[service][source]
 
-        # This is a required setting
         if 'routes' not in cfg:
-            raise ConfigurationError(f'routes not defined for {service}')
-
-        self._routing_rules[service] = []
+            return
 
         if isinstance(cfg['routes'], str):
             self._routing_rules[service].append(
@@ -125,7 +144,7 @@ class Rules:
         elif isinstance(cfg['routes'], list):
             for r in cfg['routes']:
                 self._routing_rules[service].append(
-                    lambda x, r=r: r['THEN'] if r['IF'].lower() in x.message.lower() else None
+                    lambda x, r=r: r['THEN'] if r['IF'].lower() in getattr(x, source).lower() else None
                 )
         else:
             raise ConfigurationError(f'invalid routes definition for {service}')
