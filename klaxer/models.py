@@ -1,6 +1,6 @@
 """Models for DTO and other ops."""
 import datetime
-from enum import Enum
+from enum import IntEnum
 
 TRANSFORMERS = {}
 
@@ -92,12 +92,9 @@ def transform_sensu(data):
         'timestamp': datetime.datetime.now(),
     }
 
-class NoValueEnum(Enum):
-    def __repr__(self):
-        return '<%s.%s>' % (self.__class__.__name__, self.name)
-
-class Severity(NoValueEnum):
+class Severity(IntEnum):
     CRITICAL = 3
     WARNING = 2
     OK = 1
     UNKNOWN = 0
+
