@@ -60,6 +60,26 @@ class Rules:
         if not self._routing_rules:
             raise ConfigurationError(f'routes not defined for {service}')
 
+    def _classify(self, alert, source, cfg):
+        """Return the classification level for an alert given the defined config
+
+        :param alert: The alert object to be classified
+        :param source: The source field from the Alert object that will be used
+        :param cfg: The service configuration for the type of Alert being classified
+        :returns: IntEnum - Severity object
+        """
+        if any(crit in getattr(alert, source).lower() for crit in
+               cfg['classification'].get('CRITICAL', [])):
+            return Severity.CRITICAL
+        elif any(warn in getattr(alert, source).lower() for warn in
+                 cfg['classification'].get('WARNING', [])):
+            return Severity.WARNING
+        elif any(ok in getattr(alert, source).lower() for ok in
+                 cfg['classification'].get('OK', [])):
+            return Severity.OK
+        else:
+            return Severity.UNKNOWN
+
     def _build_classification_rules(self, service, source):
         """Build the classification rule set for a service
 
@@ -75,15 +95,8 @@ class Rules:
             self._classification_rules[service].append(lambda x: Severity.UNKNOWN)
             return
 
-        self._classification_rules[service].append(
-            lambda x, cfg=cfg: Severity.CRITICAL if any(crit in getattr(x, source).lower() for crit in
-                                            cfg['classification'].get('CRITICAL', []))
-                    else Severity.WARNING if any(warn in getattr(x, source).lower() for warn in
-                                            cfg['classification'].get('WARNING', []))
-                    else Severity.OK if any(ok in getattr(x, source).lower() for ok in
-                                            cfg['classification'].get('OK', []))
-                    else Severity.UNKNOWN
-        )
+        self._classification_rules[service].append(lambda x, src=source, cfg=cfg:
+                                                   self._classify(x, src, cfg))
 
     def _build_exclusion_rules(self, service, source):
         """Build the exclusion rule set for a service
