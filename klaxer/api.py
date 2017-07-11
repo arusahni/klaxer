@@ -28,7 +28,7 @@ def incoming(service_name: hug.types.text, token: hug.types.text, response, debu
         if filtered(alert, RULES.get_exclusion_rules(service_name)):
             return
         #Filtered based on user interactions (e.g. bail if we've snoozed the notification type snoozed).
-        if filtered(alert, config.CURRENT_FILTERS):
+        if filtered(alert, CURRENT_FILTERS):
             return
         #Enriched based on custom rules (e.g. all alerts with 'keepalive' have '@deborah' appended to them so Deborah gets an extra level of notification priority.
         alert = enrich(alert, RULES.get_enrichment_rules(service_name))
