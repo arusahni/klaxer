@@ -9,7 +9,7 @@ from sqlalchemy import create_engine, ForeignKey, Column, Integer, String, Boole
 from sqlalchemy.orm import sessionmaker, relationship
 from sqlalchemy.ext.declarative import declarative_base
 
-import config
+from klaxer import config
 
 
 engine = create_engine(config.DB_CONNECTION_STRING)

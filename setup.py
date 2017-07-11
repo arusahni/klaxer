@@ -11,6 +11,7 @@ REQUIREMENTS = [
     'requests',
     'slacker',
     'zappa',
+    'sqlalchemy'
 ]
 
 if sys.version_info <= (3, 6):
