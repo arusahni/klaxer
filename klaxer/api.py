@@ -6,8 +6,8 @@ import json
 import hug
 from falcon import HTTP_400, HTTP_500
 
-from klaxer import config
-from klaxer.errors import AuthorizationError, NoRouteFoundError
+from klaxer.rules import Rules
+from klaxer.errors import AuthorizationError, NoRouteFoundError, ServiceNotDefinedError
 from klaxer.lib import classify, enrich, filtered, route, send, validate
 from klaxer.models import Alert
 from klaxer.users import create_user, add_message, bootstrap, api_key_authentication, is_existing_user
@@ -15,27 +15,34 @@ from klaxer.users import create_user, add_message, bootstrap, api_key_authentica
 
 CURRENT_FILTERS = []
 
+RULES = Rules()
+
 @hug.post('/alert/{service_name}/{token}')
-def incoming(service_name: hug.types.text, token: hug.types.text, response, body=None):
+def incoming(service_name: hug.types.text, token: hug.types.text, response, debug=False, body=None):
     """An incoming alert. The core API method"""
     try:
         validate(service_name, token)
         alert = Alert.from_service(service_name, body)
-        alert = classify(alert, config.CLASSIFICATION_RULES)
+        alert = classify(alert, RULES.get_classification_rules(service_name))
         # Filter based on rules (e.g. junk an alert if a string is in the body or if it came from a CI bot).
-        if filtered(alert, config.EXCLUSION_RULES):
+        if filtered(alert, RULES.get_exclusion_rules(service_name)):
             return
         #Filtered based on user interactions (e.g. bail if we've snoozed the notification type snoozed).
         if filtered(alert, config.CURRENT_FILTERS):
             return
         #Enriched based on custom rules (e.g. all alerts with 'keepalive' have '@deborah' appended to them so Deborah gets an extra level of notification priority.
-        alert = enrich(alert, config.ENRICHMENTS)
+        alert = enrich(alert, RULES.get_enrichment_rules(service_name))
         # Determine where the message goes
-        alert = route(alert, config.ROUTES)
+        alert = route(alert, RULES.get_routing_rules(service_name))
+
+        # Present relevant debug info without actually sending the Alert
+        if debug:
+            return alert.to_dict()
+
         #The target channel gets queried for the most recent message. If it's identical, perform rollup. Otherwise, post the alert.
         send(alert)
         return {"status": "ok"}
-    except (AuthorizationError, NoRouteFoundError) as error:
+    except (AuthorizationError, NoRouteFoundError, ServiceNotDefinedError) as error:
         logging.exception('Failed to serve an alert response')
         response.status = HTTP_500
         return {"status": error.message}

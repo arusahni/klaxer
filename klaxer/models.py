@@ -1,6 +1,6 @@
 """Models for DTO and other ops."""
 import datetime
-from enum import Enum
+from enum import IntEnum
 
 TRANSFORMERS = {}
 
@@ -36,6 +36,20 @@ class Alert:
     def __hash__(self):
         # Ignore timestamp since this is used to snooze
         return hash((self.severity, self.service, self.title, self.message))
+
+    def to_dict(self):
+        return {
+            'count': self.count,
+            'service': self.service,
+            'message': self.message,
+            'severity': str(self.severity),
+            'target': self.target,
+            'timestamp': self.timestamp,
+            'title': self.title,
+            'username': self.username,
+            'icon_emoji': self.icon_emoji,
+            'icon_url': self.icon_url
+        }
 
     @classmethod
     def from_service(cls, service_name, data):
@@ -78,12 +92,9 @@ def transform_sensu(data):
         'timestamp': datetime.datetime.now(),
     }
 
-class NoValueEnum(Enum):
-    def __repr__(self):
-        return '<%s.%s>' % (self.__class__.__name__, self.name)
+class Severity(IntEnum):
+    CRITICAL = 3
+    WARNING = 2
+    OK = 1
+    UNKNOWN = 0
 
-class Severity(NoValueEnum):
-    WARNING = 'warning'
-    CRITICAL = 'critical'
-    OK = 'ok'
-    UNKNOWN = 'unknown'
