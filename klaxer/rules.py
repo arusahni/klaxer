@@ -77,8 +77,8 @@ class Rules:
         elif any(ok in getattr(alert, source).lower() for ok in
                  cfg['classification'].get('OK', [])):
             return Severity.OK
-        else:
-            return Severity.UNKNOWN
+
+        return Severity.UNKNOWN
 
     def _build_classification_rules(self, service, source):
         """Build the classification rule set for a service
