@@ -1,6 +1,7 @@
 """Methods, classes, and functions for getting your Klaxer registration on."""
 
 import json
+import logging
 from uuid import uuid4
 from datetime import datetime
 
@@ -117,10 +118,13 @@ def approve(user):
     :rtype: `klaxer.users.KlaxerUser`
 
     """
+    if user.approved:
+        logging.warn('noop - User %d already approved', user.id)
+        return user
     user.approved = True
-    approval_msg = next(msg for msg in user.messages if msg.text == config.MSG_WELCOME)
-    if approval_msg:
-        session.delete(approval_msg)
+    for message in user.messages:
+        if message.text == config.MSG_WELCOME:
+            session.delete(message)
     session.add(user)
     session.commit()
     return user
