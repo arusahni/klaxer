@@ -118,6 +118,9 @@ def approve(user):
 
     """
     user.approved = True
+    approval_msg = next(msg for msg in user.messages if msg.text == config.MSG_WELCOME)
+    if approval_msg:
+        session.delete(approval_msg)
     session.add(user)
     session.commit()
     return user
