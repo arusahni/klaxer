@@ -6,7 +6,8 @@ from uuid import uuid4
 from datetime import datetime
 
 import hug
-from sqlalchemy import create_engine, ForeignKey, Column, Integer, String, Boolean, Date, Text
+from sqlalchemy import create_engine, ForeignKey, Column, Integer, String, \
+    Boolean, Date, Text
 from sqlalchemy.orm import sessionmaker, relationship
 from sqlalchemy.ext.declarative import declarative_base
 
