@@ -26,8 +26,9 @@ SLACK_TOKEN = os.environ.get('KLAXER_TOKEN')
 # Every 5 minutes
 WINDOW = 60 * 5
 
-# Database
-DB_CONNECTION_STRING = 'sqlite:///klaxer.db'
+# Database: Accepts postgresql or sqlite, default is sqlite
+DB_CONNECTION_STRING = 'sqlite'
+#DB_CONNECTION_STRING = 'postgresql'
 
 # Messages
 MSG_WELCOME = 'Welcome to Klaxer! Let staff know if you have any issues.'
