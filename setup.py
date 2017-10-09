@@ -11,7 +11,8 @@ REQUIREMENTS = [
     'requests',
     'slacker',
     'zappa',
-    'sqlalchemy'
+    'sqlalchemy',
+    'psycopg2'
 ]
 
 if sys.version_info <= (3, 6):
