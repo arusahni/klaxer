@@ -27,8 +27,14 @@ SLACK_TOKEN = os.environ.get('KLAXER_TOKEN')
 WINDOW = 60 * 5
 
 # Database: Accepts postgresql or sqlite, default is sqlite
-DB_CONNECTION_STRING = 'sqlite'
-#DB_CONNECTION_STRING = 'postgresql'
+DB_CONNECTION = 'sqlite'
+#DB_CONNECTION = 'postgresql'
+
+# Inform user, password and host where PostgreSQL server is located
+#POSTGRE_USER = ''
+#POSTGRE_PASS = ''
+#POSTGRE_HOST = '127.0.0.1'
+
 
 # Messages
 MSG_WELCOME = 'Welcome to Klaxer! Let staff know if you have any issues.'
